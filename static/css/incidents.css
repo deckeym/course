@@ -1,0 +1,176 @@
+/* === Тема: переменные и фон, как на странице прогноза === */
+:root { --card-bg: #ffffff; }
+
+html[data-theme="dark"] {
+  --card-bg: #151718;
+}
+
+html, body { height: 100%; }
+
+body {
+  background: #eef9fb;           /* светлая по умолчанию */
+  color: #0b2e2f;
+}
+
+html[data-theme="dark"] body {
+  background: #0e0f10 !important; /* как в прогнозе */
+  color: #e7ecef !important;
+}
+
+/* ===== БАЗА ===== */
+*,
+*::before,
+*::after { box-sizing: border-box; }
+
+html, body { height: 100%; }
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  background: #eef9fb;
+  color: #0b2e2f;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+
+/* фиксируем кнопку темы */
+.theme-toggle {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+}
+
+/* ===== КАРТОЧКА ===== */
+.incident-card {
+  width: min(720px, calc(100vw - 32px));
+  background: var(--card-bg, #ffffff);
+  border-radius: 18px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, .08);
+  padding: 28px 26px 24px;
+}
+
+.incident-card h2 {
+  margin: 0 0 18px 0;
+  text-align: center;
+  font-weight: 700;
+  color: #0b574f;
+}
+
+/* ===== FLASH (inc_*) ===== */
+.flash-messages { margin: 10px 0 14px; }
+.flash { padding: 10px 12px; border-radius: 10px; font-size: 14px; margin-bottom: 8px; }
+.flash.inc_success { background: #d1e7dd; color: #0f5132; }
+.flash.inc_warning { background: #fff3cd; color: #664d03; }
+.flash.inc_danger  { background: #f8d7da; color: #842029; }
+
+/* ===== ФОРМА ===== */
+form { display: grid; gap: 8px; }
+label { font-size: 14px; margin-top: 10px; color: #2d3a3a; }
+
+input[type="number"],
+textarea {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid #d7e3ea;
+  background: #fff;
+  border-radius: 12px;
+  outline: none;
+  transition: border-color .15s ease, box-shadow .15s ease;
+  font-size: 15px;
+}
+
+input[type="number"] { height: 44px; }
+
+input[type="number"]:focus,
+textarea:focus {
+  border-color: #6bb7ff;
+  box-shadow: 0 0 0 3px rgba(13, 110, 253, .15);
+}
+
+textarea { resize: vertical; min-height: 88px; }
+
+.hint { margin-top: 4px; color: #6c757d; }
+
+/* кнопка */
+button[type="submit"] {
+  margin-top: 16px;
+  height: 44px;
+  border: 0;
+  border-radius: 12px;
+  background: #0d6efd;
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform .05s ease, filter .15s ease;
+}
+button[type="submit"]:hover { filter: brightness(1.05); }
+button[type="submit"]:active { transform: translateY(1px); }
+
+/* ===== СПИСОК ===== */
+.incident-list { list-style: none; padding: 0; margin: 16px 0 0 0; }
+.incident-list li {
+  display: grid;
+  grid-template-columns: auto auto auto 1fr;
+  gap: 8px 12px;
+  align-items: center;
+  padding: 10px 12px;
+  border: 1px solid #e9eef2;
+  border-radius: 12px;
+  background: #fff;
+  margin-bottom: 8px;
+}
+.incident-list .date { font-weight: 600; }
+.incident-list .impact { justify-self: end; min-width: 80px; text-align: right; }
+.incident-list .desc { grid-column: 1 / -1; color: #344b4b; }
+
+@media (max-width: 640px) {
+  .incident-list li { grid-template-columns: auto auto 1fr; }
+  .incident-list .impact { grid-column: 3; }
+}
+
+/* убрать стрелки у number */
+input[type=number]::-webkit-outer-spin-button,
+input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+input[type=number] { -moz-appearance: textfield; }
+
+/* ===== ТЁМНАЯ ТЕМА ===== */
+:root { --card-bg: #ffffff; }
+[data-theme="dark"] {
+  --card-bg: #151718;
+  color: #e7ecef;
+  background: #0e0f10;
+}
+[data-theme="dark"] .incident-card h2 { color: #cfe7e4; }
+[data-theme="dark"] .incident-card { box-shadow: 0 10px 30px rgba(0, 0, 0, .45); }
+[data-theme="dark"] input[type="number"],
+[data-theme="dark"] textarea {
+  background: #1e2224;
+  border-color: #30373a;
+  color: #e7ecef;
+}
+
+/* Базовый фон карточек */
+.form-card,
+.incident-card,
+.container {
+  background: var(--card-bg, #ffffff);
+  border-radius: 18px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, .08);
+  padding: 28px 26px 24px;
+}
+
+/* Светлая по умолчанию */
+:root { --card-bg: #ffffff; }
+
+/* Тёмная тема */
+[data-theme="dark"] {
+  --card-bg: #151718;
+  color: #e7ecef;
+  background: #0e0f10;
+}
+[data-theme="dark"] .form-card,
+[data-theme="dark"] .incident-card,
+[data-theme="dark"] .container {
+  box-shadow: 0 10px 30px rgba(0, 0, 0, .45);
+}

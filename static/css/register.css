@@ -1,0 +1,157 @@
+/* === Тема: переменные и фон, как на странице прогноза === */
+:root { --card-bg: #ffffff; }
+
+html[data-theme="dark"] {
+  --card-bg: #151718;
+}
+
+html, body { height: 100%; }
+
+body {
+  background: #eef9fb;           /* светлая по умолчанию */
+  color: #0b2e2f;
+}
+
+html[data-theme="dark"] body {
+  background: #0e0f10 !important; /* как в прогнозе */
+  color: #e7ecef !important;
+}
+
+:root {
+    --bg-color: #e0f7fa;
+    --card-color: white;
+    --text-color: #00796b;
+    --input-bg: #f0f0f0;
+    --button-bg: #0097a7;
+    --button-hover: #00796b;
+    --link-color: #00695c;
+}
+
+body.dark {
+    --bg-color: #121212;
+    --card-color: #1e1e1e;
+    --text-color: #ffffff;
+    --input-bg: #2b2b2b;
+    --button-bg: #333;
+    --button-hover: #555;
+    --link-color: #4dd0e1;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    background-color: var(--bg-color);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: var(--text-color);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+}
+
+/* Хедер */
+header {
+    width: 100%;
+    background: transparent;
+    padding: 20px;
+    display: flex;
+    justify-content: flex-start;
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+.menu-button {
+    background-color: var(--button-bg);
+    color: white;
+    text-decoration: none;
+    padding: 10px 20px;
+    border-radius: 10px;
+    font-weight: bold;
+    transition: background-color 0.3s ease;
+}
+
+.menu-button:hover {
+    background-color: var(--button-hover);
+}
+
+/* Контейнер формы */
+.login-container {
+    background-color: var(--card-color);
+    padding: 40px;
+    border-radius: 20px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    margin-top: 100px;
+    width: 90%;
+    max-width: 400px;
+    animation: fadeIn 1s ease;
+    text-align: center;
+}
+
+.login-container h2 {
+    margin-bottom: 25px;
+    font-size: 24px;
+}
+
+/* Форма */
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+input[type="text"],
+input[type="password"] {
+    padding: 10px;
+    border: none;
+    border-radius: 8px;
+    background-color: var(--input-bg);
+    font-size: 16px;
+    color: var(--text-color);
+}
+
+input:focus {
+    outline: 2px solid var(--button-bg);
+}
+
+button {
+    padding: 12px;
+    background-color: var(--button-bg);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+button:hover {
+    background-color: var(--button-hover);
+}
+
+.login-container p {
+    margin-top: 20px;
+    font-size: 14px;
+}
+
+.login-container a {
+    color: var(--link-color);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.login-container a:hover {
+    text-decoration: underline;
+}
+
+/* Анимация */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

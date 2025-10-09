@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Управление инцидентами</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/incidents.css') }}">
+  <script defer src="{{ url_for('static', filename='js/theme-toggle.js') }}"></script>
+  <script>
+    function updateDescCounter() {
+      const el = document.getElementById('description');
+      const counter = document.getElementById('descCounter');
+      if (el && counter) {
+        counter.textContent = (el.value || '').length + '/255';
+      }
+    }
+    document.addEventListener('DOMContentLoaded', updateDescCounter);
+  </script>
+</head>
+<body>
+  <div class="theme-toggle">
+    <button id="toggle-theme">🌙</button>
+  </div>
+
+  <div class="incident-card">
+    <h2>Добавить происшествие</h2>
+
+    {% with messages = get_flashed_messages(with_categories=true, category_filter=['inc_success','inc_warning','inc_danger']) %}
+      {% if messages %}
+        <div class="flash-messages">
+          {% for category, message in messages %}
+            <div class="flash {{ category }}">{{ message }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    <form method="POST" autocomplete="off">
+      <label for="year">Год (только 2026–2030):</label>
+      <input id="year"
+             type="number"
+             name="year"
+             min="2026"
+             max="2030"
+             required
+             value="{{ request.form.get('year','') }}">
+
+      <label for="month">Месяц:</label>
+      <input id="month"
+             type="number"
+             name="month"
+             min="1"
+             max="12"
+             required
+             value="{{ request.form.get('month','') }}">
+
+      <label for="impact">Влияние (−1.00 … 1.00; например, −0.20 = −20%):</label>
+      <input id="impact"
+             type="number"
+             name="impact"
+             step="0.01"
+             min="-1"
+             max="1"
+             required
+             placeholder="-0.20"
+             title="Диапазон: от -1.00 до 1.00"
+             value="{{ request.form.get('impact','') }}">
+
+      <label for="duration">Продолжительность (в месяцах):</label>
+      <input id="duration"
+             type="number"
+             name="duration"
+             min="1"
+             max="12"
+             required
+             value="{{ request.form.get('duration','') }}">
+
+      <label for="description">Описание (до 255 символов):</label>
+      <textarea id="description"
+                name="description"
+                maxlength="255"
+                oninput="updateDescCounter()"
+                rows="3"
+                placeholder="Кратко опишите событие...">{{ request.form.get('description','') }}</textarea>
+      <div class="hint"><small id="descCounter">0/255</small></div>
+
+      <button type="submit">Добавить</button>
+    </form>
+
+    <h3>Список инцидентов</h3>
+    <ul class="incident-list">
+      {% for inc in incidents %}
+      <li>
+        <span class="date">{{ inc.year }}-{{ '%02d'|format(inc.month) }}</span>
+        <span class="duration">({{ inc.duration }} мес)</span>
+        <span class="impact">{{ (inc.impact * 100) | round(1) }}%</span>
+        <span class="desc"> — {{ inc.description }}</span>
+      </li>
+      {% endfor %}
+    </ul>
+
+    <a class="back-link" href="{{ url_for('dashboard') }}">← Назад</a>
+  </div>
+</body>
+</html>

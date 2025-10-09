@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Личный кабинет</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+    <script defer src="{{ url_for('static', filename='js/theme-toggle.js') }}"></script>
+</head>
+<body>
+    <div class="theme-toggle">
+        <button id="toggle-theme">🌙</button>
+    </div>
+    <div class="dashboard-card">
+        <h2>Здравствуйте, {{ username }}!</h2>
+        <ul>
+            <li><a href="{{ url_for('edit_data') }}">📝 Изменить данные</a></li>
+            <li><a href="{{ url_for('incidents') }}">🚨 Происшествия</a></li>
+            <li><a href="{{ url_for('predict') }}">📊 Сделать прогноз</a></li>
+            <li><a href="{{ url_for('logout') }}">🚪 Выйти</a></li>
+        </ul>
+    </div>
+</body>
+</html>

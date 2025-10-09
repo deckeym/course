@@ -1,0 +1,162 @@
+/* === Тема: переменные и фон, как на странице прогноза === */
+:root { --card-bg: #ffffff; }
+
+html[data-theme="dark"] {
+  --card-bg: #151718;
+}
+
+html, body { height: 100%; }
+
+body {
+  background: #eef9fb;           /* светлая по умолчанию */
+  color: #0b2e2f;
+}
+
+html[data-theme="dark"] body {
+  background: #0e0f10 !important; /* как в прогнозе */
+  color: #e7ecef !important;
+}
+
+:root {
+    --bg-color: #e0f7fa;
+    --text-color: #004d40;
+    --btn-bg: #0097a7;
+    --btn-hover: #00796b;
+    --btn-secondary: #ffffff;
+    --btn-secondary-hover: #f0f0f0;
+    --btn-secondary-text: #00796b;
+}
+
+body.dark {
+    --bg-color: #121212;
+    --text-color: #ffffff;
+    --btn-bg: #333;
+    --btn-hover: #555;
+    --btn-secondary: #1e1e1e;
+    --btn-secondary-hover: #2c2c2c;
+    --btn-secondary-text: #4dd0e1;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: var(--bg-color);
+    color: var(--text-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    background-image: url("https://images.unsplash.com/photo-1607083200703-6e162f3f4db2?auto=format&fit=crop&w=1400&q=80");
+    background-size: cover;
+    background-position: center;
+    position: relative;
+}
+
+/* затемнение */
+body::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-color: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(2px);
+    transition: background-color 0.3s ease;
+}
+
+body.dark::before {
+    background-color: rgba(0, 0, 0, 0.6);
+}
+
+.welcome-container {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+    padding: 40px;
+    background-color: rgba(255, 255, 255, 0.9);
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    max-width: 600px;
+    width: 90%;
+    animation: fadeIn 1s ease;
+}
+
+body.dark .welcome-container {
+    background-color: rgba(30, 30, 30, 0.95);
+}
+
+.welcome-container h1 {
+    font-size: 32px;
+    margin-bottom: 10px;
+}
+
+.welcome-container p {
+    font-size: 18px;
+    margin-bottom: 30px;
+    color: var(--text-color);
+}
+
+.action-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.btn {
+    padding: 12px 25px;
+    background-color: var(--btn-bg);
+    color: white;
+    text-decoration: none;
+    font-size: 16px;
+    border-radius: 10px;
+    transition: background-color 0.3s ease;
+}
+
+.btn:hover {
+    background-color: var(--btn-hover);
+}
+
+.btn.secondary {
+    background-color: var(--btn-secondary);
+    color: var(--btn-secondary-text);
+    border: 2px solid var(--btn-secondary-text);
+}
+
+.btn.secondary:hover {
+    background-color: var(--btn-secondary-hover);
+}
+
+/* Кнопка темы */
+.theme-toggle {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    z-index: 3;
+}
+
+#toggle-theme {
+    font-size: 20px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+}
+
+#toggle-theme:hover {
+    transform: scale(1.2);
+}
+
+/* Анимация */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* универсальные базовые стили */
+.flash, .alert { padding: 10px 12px; border-radius: 8px; margin: 8px 0; font-size: 14px; }

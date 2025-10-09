@@ -1,0 +1,136 @@
+/* === ТЕМА (совместимо с остальными страницами) === */
+:root { --card-bg: #ffffff; --muted: #2d3a3a; --muted-weak: #6b7b7b; }
+html[data-theme="dark"] {
+  --card-bg: #151718;
+  --muted: #dfe7ea;
+  --muted-weak: #a9b4b9;
+}
+html, body { height: 100%; }
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  background: #eef9fb;
+  color: #0b2e2f;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+html[data-theme="dark"] body {
+  background: #0e0f10 !important;
+  color: #e7ecef !important;
+}
+
+/* кнопка темы */
+.theme-toggle { position: fixed; top: 12px; right: 12px; }
+
+/* === КАРТОЧКА страницы === */
+.predict-card{
+  width: min(980px, calc(100vw - 32px));
+  background: var(--card-bg);
+  border-radius: 18px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, .08);
+  padding: 26px;
+}
+html[data-theme="dark"] .predict-card{ box-shadow: 0 10px 30px rgba(0,0,0,.45); }
+
+.predict-card h1{
+  margin: 0 0 14px;
+  text-align: center;
+  font-size: 28px;
+  line-height: 1.2;
+}
+
+/* === ФЛЕШИ (pred_*) === */
+.messages { margin: 10px 0 14px; }
+.alert { padding: 10px 12px; border-radius: 10px; font-size: 14px; margin-bottom: 8px; }
+.alert.pred_success { background: #d1e7dd; color: #0f5132; }
+.alert.pred_warning { background: #fff3cd; color: #664d03; }
+.alert.pred_danger  { background: #f8d7da; color: #842029; }
+
+/* === ФОРМА: вертикальная, как просил пользователь === */
+.form-vertical{
+  display: grid;
+  gap: 12px;
+  max-width: 520px;
+  margin: 0 auto 14px;
+}
+.field label{
+  display: block;
+  font-size: 14px;
+  color: var(--muted);
+  margin: 8px 0 6px;
+}
+.field input{
+  width: 100%;
+  height: 44px;
+  padding: 10px 12px;
+  border: 1px solid #d7e3ea;
+  border-radius: 12px;
+  background: #fff;
+  outline: none;
+  transition: border-color .15s ease, box-shadow .15s ease;
+  font-size: 15px;
+}
+.field input:focus{
+  border-color: #6bb7ff;
+  box-shadow: 0 0 0 3px rgba(13, 110, 253, .15);
+}
+html[data-theme="dark"] .field input{
+  background: #1e2224;
+  border-color: #30373a;
+  color: #e7ecef;
+}
+
+.primary{
+  height: 44px;
+  border: 0;
+  border-radius: 12px;
+  background: #0d6efd;
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform .05s ease, filter .15s ease;
+}
+.primary:hover{ filter: brightness(1.05); }
+.primary:active{ transform: translateY(1px); }
+
+/* === РЕЗУЛЬТАТ === */
+.result{
+  text-align: center;
+  margin: 12px 0 10px;
+}
+.result h2{
+  margin: 0;
+  font-size: 18px;
+}
+
+/* === ГРАФИК === */
+.plot-card{
+  background: #fff;
+  border: 1px solid #e9eef2;
+  border-radius: 12px;
+  padding: 10px;
+  overflow: hidden;
+}
+.plot-card img{ width: 100%; height: auto; display: block; }
+
+html[data-theme="dark"] .plot-card{
+  background: #1e2224;
+  border-color: #30373a;
+}
+
+/* ссылка назад */
+.back-link{
+  display: block;
+  text-align: center;
+  margin-top: 12px;
+  color: #0b6b77;
+  text-decoration: none;
+}
+.back-link:hover{ text-decoration: underline; }
+
+/* мобильная адаптация */
+@media (max-width: 560px){
+  .predict-card{ padding: 20px; }
+  .predict-card h1{ font-size: 24px; }
+}

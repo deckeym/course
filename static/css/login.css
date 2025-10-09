@@ -1,0 +1,172 @@
+/* === Тема: переменные и фон, как на странице прогноза === */
+:root { --card-bg: #ffffff; }
+
+html[data-theme="dark"] {
+  --card-bg: #151718;
+}
+
+html, body { height: 100%; }
+
+body {
+  background: #eef9fb;           /* светлая по умолчанию */
+  color: #0b2e2f;
+}
+
+html[data-theme="dark"] body {
+  background: #0e0f10 !important; /* как в прогнозе */
+  color: #e7ecef !important;
+}
+
+
+/* ===== БАЗА ===== */
+*,
+*::before,
+*::after { box-sizing: border-box; }
+
+html, body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji", sans-serif;
+  background: #eef9fb;               /* мягкий фон */
+  color: #0b2e2f;
+  display: grid;
+  place-items: center;                /* центрируем карточку по вертикали и горизонтали */
+  padding: 24px;
+}
+
+/* кнопка темы/меню не мешает центровке */
+header {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+}
+.theme-toggle {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+}
+
+/* ===== КАРТОЧКА ===== */
+.login-container {
+  width: min(480px, calc(100vw - 32px));
+  background: var(--card-bg, #ffffff);
+  border-radius: 18px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, .08);
+  padding: 28px 26px 24px;
+}
+
+.login-container h2 {
+  margin: 0 0 18px 0;
+  text-align: center;
+  font-weight: 700;
+  color: #0b574f;
+}
+
+/* ===== FLASH ===== */
+.flash-messages { margin: 10px 0 14px; }
+.flash {
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+.flash.auth_success { background: #d1e7dd; color: #0f5132; }
+.flash.auth_warning { background: #fff3cd; color: #664d03; }
+.flash.auth_info    { background: #cff4fc; color: #055160; }
+.flash.auth_danger  { background: #f8d7da; color: #842029; }
+
+/* ===== ФОРМА ===== */
+form {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+
+label {
+  font-size: 14px;
+  line-height: 1.2;
+  margin-top: 10px;
+  color: #2d3a3a;
+}
+
+input[type="text"],
+input[type="password"] {
+  width: 100%;
+  height: 44px;                   /* одинаковая высота */
+  padding: 10px 14px;
+  padding-right: 44px;            /* запас под иконки менеджера паролей */
+  border: 1px solid #d7e3ea;
+  background: #edf6ff;
+  border-radius: 12px;
+  outline: none;
+  transition: border-color .15s ease, box-shadow .15s ease;
+  font-size: 15px;
+}
+
+input[type="text"]:focus,
+input[type="password"]:focus {
+  border-color: #6bb7ff;
+  box-shadow: 0 0 0 3px rgba(13, 110, 253, .15);
+}
+
+button[type="submit"] {
+  margin-top: 16px;
+  height: 44px;
+  border: 0;
+  border-radius: 12px;
+  background: #0d6efd;
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform .05s ease, filter .15s ease, background .15s ease;
+}
+button[type="submit"]:hover { filter: brightness(1.05); }
+button[type="submit"]:active { transform: translateY(1px); }
+
+/* ссылка под кнопкой */
+.login-container p {
+  text-align: center;
+  margin: 12px 0 0 0;
+}
+.login-container a { color: #0b6b77; }
+.login-container a:hover { text-decoration: underline; }
+
+/* ===== АВТОФИЛЛ/ИКОНКИ БРАУЗЕРА ===== */
+input::-ms-reveal,
+input::-ms-clear { display: none; }
+
+input:-webkit-autofill {
+  -webkit-box-shadow: 0 0 0 40px #edf6ff inset;  /* цвет как у input background */
+  -webkit-text-fill-color: inherit;
+  caret-color: inherit;
+}
+
+/* убираем стрелки у number (на всякий) */
+input[type=number]::-webkit-outer-spin-button,
+input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+input[type=number] { -moz-appearance: textfield; }
+
+/* ===== ТЁМНАЯ ТЕМА (если переключатель выставляет data-theme="dark") ===== */
+:root { --card-bg: #ffffff; }
+[data-theme="dark"] {
+  --card-bg: #151718;
+  color: #e7ecef;
+  background: #0e0f10;
+}
+[data-theme="dark"] .login-container h2 { color: #cfe7e4; }
+[data-theme="dark"] .login-container {
+  box-shadow: 0 10px 30px rgba(0, 0, 0, .45);
+}
+[data-theme="dark"] input[type="text"],
+[data-theme="dark"] input[type="password"] {
+  background: #1e2224;
+  border-color: #30373a;
+  color: #e7ecef;
+}
+[data-theme="dark"] input:-webkit-autofill {
+  -webkit-box-shadow: 0 0 0 40px #1e2224 inset;
+  -webkit-text-fill-color: #e7ecef;
+}

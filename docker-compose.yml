@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:16
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 4780
+      POSTGRES_DB: traffic_db
+    ports:
+      - "5432:5432"
+    networks:
+      - traffic_network
+
+  web:
+    build: .
+    restart: always
+    depends_on:
+      - db
+    environment:
+      DATABASE_URL: postgresql://postgres:4780@db:5432/traffic_db
+    ports:
+      - "5000:5000"
+    networks:
+      - traffic_network
+
+networks:
+  traffic_network:

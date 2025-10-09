@@ -1,0 +1,212 @@
+/* === Тема: переменные и фон, как на странице прогноза === */
+:root { --card-bg: #ffffff; }
+
+html[data-theme="dark"] {
+  --card-bg: #151718;
+}
+
+html, body { height: 100%; }
+
+body {
+  background: #eef9fb;           /* светлая по умолчанию */
+  color: #0b2e2f;
+}
+
+html[data-theme="dark"] body {
+  background: #0e0f10 !important; /* как в прогнозе */
+  color: #e7ecef !important;
+}
+
+
+/* ===== БАЗА ===== */
+*,
+*::before,
+*::after { box-sizing: border-box; }
+
+html, body { height: 100%; }
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  background: #eef9fb;
+  color: #0b2e2f;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+
+/* фиксируем кнопку темы */
+.theme-toggle {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+}
+
+/* ===== КАРТОЧКА ===== */
+.form-card {
+  width: min(560px, calc(100vw - 32px));
+  background: var(--card-bg, #ffffff);
+  border-radius: 18px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, .08);
+  padding: 28px 26px 24px;
+}
+
+.form-card h2 {
+  margin: 0 0 18px 0;
+  text-align: center;
+  font-weight: 700;
+  color: #0b574f;
+}
+
+/* ===== FLASH (edit_*) ===== */
+.flash-messages { margin: 10px 0 14px; }
+.flash { padding: 10px 12px; border-radius: 10px; font-size: 14px; margin-bottom: 8px; }
+.flash.edit_success { background: #d1e7dd; color: #0f5132; }
+.flash.edit_warning { background: #fff3cd; color: #664d03; }
+.flash.edit_danger  { background: #f8d7da; color: #842029; }
+
+/* ===== ФОРМА ===== */
+form { display: grid; gap: 8px; }
+label { font-size: 14px; margin-top: 10px; color: #2d3a3a; }
+
+input[type="number"] {
+  width: 100%;
+  height: 44px;
+  padding: 10px 14px;
+  border: 1px solid #d7e3ea;
+  background: #fff;
+  border-radius: 12px;
+  outline: none;
+  transition: border-color .15s ease, box-shadow .15s ease;
+  font-size: 15px;
+}
+
+input[type="number"]:focus {
+  border-color: #6bb7ff;
+  box-shadow: 0 0 0 3px rgba(13, 110, 253, .15);
+}
+
+button[type="submit"] {
+  margin-top: 16px;
+  height: 44px;
+  border: 0;
+  border-radius: 12px;
+  background: #198754;
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform .05s ease, filter .15s ease;
+}
+button[type="submit"]:hover { filter: brightness(1.05); }
+button[type="submit"]:active { transform: translateY(1px); }
+
+/* назад */
+.back-link { display: inline-block; margin-top: 10px; color: #0b6b77; text-decoration: none; }
+.back-link:hover { text-decoration: underline; }
+
+/* убрать стрелки у number */
+input[type=number]::-webkit-outer-spin-button,
+input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+input[type=number] { -moz-appearance: textfield; }
+
+/* ===== ТЁМНАЯ ТЕМА ===== */
+:root { --card-bg: #ffffff; }
+[data-theme="dark"] {
+  --card-bg: #151718;
+  color: #e7ecef;
+  background: #0e0f10;
+}
+[data-theme="dark"] .form-card h2 { color: #cfe7e4; }
+[data-theme="dark"] .form-card { box-shadow: 0 10px 30px rgba(0, 0, 0, .45); }
+[data-theme="dark"] input[type="number"] {
+  background: #1e2224;
+  border-color: #30373a;
+  color: #e7ecef;
+}
+
+/* Базовый фон карточек */
+.form-card,
+.incident-card,
+.container {
+  background: var(--card-bg, #ffffff);
+  border-radius: 18px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, .08);
+  padding: 28px 26px 24px;
+}
+
+/* Светлая по умолчанию */
+:root { --card-bg: #ffffff; }
+
+/* Тёмная тема */
+[data-theme="dark"] {
+  --card-bg: #151718;
+  color: #e7ecef;
+  background: #0e0f10;
+}
+[data-theme="dark"] .form-card,
+[data-theme="dark"] .incident-card,
+[data-theme="dark"] .container {
+  box-shadow: 0 10px 30px rgba(0, 0, 0, .45);
+}
+
+
+/* сетка: форма + предпросмотр */
+.edit-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+.edit-form label { display:block; margin: 8px 0 6px; }
+.preview {
+  background: rgba(0,0,0,0.03);
+  border: 1px solid #e9eef2;
+  border-radius: 12px;
+  padding: 12px;
+}
+html[data-theme="dark"] .preview {
+  background: rgba(255,255,255,0.04);
+  border-color: #30373a;
+}
+.preview-title { font-weight: 700; margin-bottom: 6px; }
+.preview-line {
+  display: flex; align-items: baseline; gap: 8px;
+  font-size: 16px; margin-bottom: 6px;
+}
+.preview-sep { opacity: .6; }
+.preview-value { font-weight: 700; }
+.muted { color: #6c757d; }
+html[data-theme="dark"] .muted { color: #a9b4b9; }
+
+/* таблица данных */
+.table-title { margin: 14px 0 8px; }
+.scroll-x { overflow-x: auto; }
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  border: 1px solid #e9eef2;
+  background: var(--card-bg);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.data-table th, .data-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid #eef2f5;
+  text-align: right;
+  white-space: nowrap;
+}
+.data-table thead th {
+  position: sticky; top: 0;
+  background: rgba(0,0,0,0.03);
+  text-align: center;
+}
+.year-cell { text-align: center; font-weight: 700; }
+html[data-theme="dark"] .data-table { border-color: #30373a; }
+html[data-theme="dark"] .data-table th,
+html[data-theme="dark"] .data-table td { border-bottom-color: #2a2f33; }
+html[data-theme="dark"] .data-table thead th { background: rgba(255,255,255,0.05); }
+
+/* адаптив */
+@media (max-width: 720px) {
+  .edit-grid { grid-template-columns: 1fr; }
+}
