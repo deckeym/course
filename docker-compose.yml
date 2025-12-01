@@ -18,10 +18,26 @@ services:
     restart: always
     depends_on:
       - db
+      - go_api        # ждём ещё и Go-сервис
     environment:
       DATABASE_URL: postgresql://postgres:4780@db:5432/traffic_db
+      # Flask будет ходить в Go-сервис по этому адресу
+      GO_API_URL: http://go_api:8080
     ports:
       - "5000:5000"
+    networks:
+      - traffic_network
+
+  go_api:
+    build: ./go_incidents   # папка с main.go и Dockerfile для Go
+    restart: always
+    depends_on:
+      - db
+    environment:
+      # та же БД, что и у Flask
+      DATABASE_URL: postgres://postgres:4780@db:5432/traffic_db?sslmode=disable
+    ports:
+      - "8080:8080"
     networks:
       - traffic_network
 

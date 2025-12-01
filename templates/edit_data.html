@@ -55,7 +55,7 @@
   </div>
 
   <div class="form-card">
-    <h2>Изменение данных о пассажиропотоке</h2>
+    <h2>Изменение данных о пассажиропотоке поездов</h2>
 
     {% with messages = get_flashed_messages(with_categories=true, category_filter=['edit_success','edit_warning','edit_danger']) %}
       {% if messages %}
@@ -78,7 +78,7 @@
         <input id="month" type="number" name="month" min="1" max="12" required
                value="{{ request.form.get('month','') }}" oninput="updatePreview();">
 
-        <label for="passengers">Новое количество пассажиров</label>
+        <label for="passengers">Новое количество пассажиров поездов</label>
         <input id="passengers" type="number" name="passengers" min="0" required
                value="{{ request.form.get('passengers','') }}">
 

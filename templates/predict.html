@@ -12,7 +12,7 @@
   </div>
 
   <div class="predict-card">
-    <h1>📈 Прогноз пассажиропотока</h1>
+    <h1>📈 Прогноз пассажиропотока поездов</h1>
 
     {% with messages = get_flashed_messages(with_categories=true, category_filter=['pred_success','pred_warning','pred_danger']) %}
       {% if messages %}
@@ -43,7 +43,7 @@
     {% if prediction %}
       <div class="result">
         <h2>🔮 Прогноз на {{ request.form.get('year') }}-{{ "%02d"|format((request.form.get('month') or 1)|int) }}:
-          <strong>{{ prediction | round }} пассажиров</strong>
+          <strong>{{ prediction | round }} пассажиров поездов</strong>
         </h2>
       </div>
     {% endif %}

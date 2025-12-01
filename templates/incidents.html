@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <title>Управление инцидентами</title>
+  <title>Инциденты на железнодорожной инфраструктуре</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/incidents.css') }}">
   <script defer src="{{ url_for('static', filename='js/theme-toggle.js') }}"></script>
   <script>
@@ -86,17 +86,28 @@
       <button type="submit">Добавить</button>
     </form>
 
-    <h3>Список инцидентов</h3>
-    <ul class="incident-list">
-      {% for inc in incidents %}
-      <li>
-        <span class="date">{{ inc.year }}-{{ '%02d'|format(inc.month) }}</span>
-        <span class="duration">({{ inc.duration }} мес)</span>
-        <span class="impact">{{ (inc.impact * 100) | round(1) }}%</span>
-        <span class="desc"> — {{ inc.description }}</span>
-      </li>
-      {% endfor %}
-    </ul>
+    <h3>Список инцидентов на железной дороге</h3>
+
+    {% if incidents and incidents|length > 0 %}
+      <ul class="incident-list">
+        {% for inc in incidents %}
+        <li>
+          <span class="date">
+            {{ inc.year }}-{{ '%02d'|format(inc.month) }}
+          </span>
+          <span class="duration">({{ inc.duration }} мес)</span>
+          <span class="impact">
+            {{ (inc.impact * 100) | round(1) }}%
+          </span>
+          <span class="desc">
+            — {{ inc.description or 'Без описания' }}
+          </span>
+        </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="empty-incidents">Инцидентов на железной дороге пока нет.</p>
+    {% endif %}
 
     <a class="back-link" href="{{ url_for('dashboard') }}">← Назад</a>
   </div>

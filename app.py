@@ -7,6 +7,9 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import io
 import base64
+import os
+import requests
+
 from models import db, PassengerData, Prediction, User, Incident
 # Следующие импорты не используются, можно удалить при желании
 from sklearn.preprocessing import OneHotEncoder
@@ -18,12 +21,17 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:4780@db/traffic_d
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.secret_key = "supersecretkey"
 
+# адрес Go-сервиса (можно переопределить переменной окружения GO_API_URL)
+GO_API_URL = os.getenv("GO_API_URL", "http://go_api:8080")
+
 db.init_app(app)
 migrate = Migrate(app, db)
+
 
 # 🔐 Функция-помощник
 def is_admin():
     return session.get("is_admin", False)
+
 
 with app.app_context():
     db.create_all()
@@ -203,7 +211,6 @@ def edit_data():
     return render_template('edit_data.html', records=records, data_map=data_map)
 
 
-
 # Прогноз
 @app.route('/predict', methods=['GET', 'POST'])
 def predict():
@@ -321,44 +328,45 @@ def predict():
     return render_template('predict.html', prediction=prediction, plot_url=plot_url)
 
 
-
-# Инциденты
+# Инциденты – реализованы в Go-сервисе, Flask только проксирует запросы
 @app.route('/incidents', methods=['GET', 'POST'])
 def incidents():
     if request.method == 'POST':
+        payload = {
+            "year":        request.form.get("year"),
+            "month":       request.form.get("month"),
+            "duration":    request.form.get("duration"),
+            "impact":      request.form.get("impact"),
+            "description": request.form.get("description") or "",
+        }
+
         try:
-            year = int(request.form['year'])
-            month = int(request.form['month'])
-            duration = int(request.form['duration'])
-            impact = float(request.form['impact'])
-            description = (request.form.get('description') or '').strip()
-        except ValueError:
-            flash("Неверный формат полей.", "inc_danger")
-            return redirect(url_for('incidents'))
+            resp = requests.post(f"{GO_API_URL}/api/incidents", json=payload, timeout=5)
+            data = resp.json()
+        except Exception as e:
+            flash(f"Ошибка при обращении к Go-сервису: {e}", "inc_danger")
+            return redirect(url_for("incidents"))
 
-        # Ограничение длины описания
-        if len(description) > 255:
-            flash(f"Описание слишком длинное ({len(description)}/255). Сократите текст.", "inc_danger")
-            return redirect(url_for('incidents'))
+        if resp.status_code != 201:
+            flash(data.get("error", "Ошибка Go-сервиса при добавлении инцидента."), "inc_danger")
+            return redirect(url_for("incidents"))
 
-        if not (2026 <= year <= 2030):
-            flash("Год должен быть от 2026 до 2030.", "inc_danger")
-            return redirect(url_for('incidents'))
+        flash("Инцидент добавлен (через Go-сервис).", "inc_success")
+        return redirect(url_for("incidents"))
 
-        incident = Incident(
-            year=year,
-            month=month,
-            duration=duration,
-            impact=impact,
-            description=description if description else None
-        )
-        db.session.add(incident)
-        db.session.commit()
-        flash("Инцидент добавлен.", "inc_success")
-        return redirect(url_for('incidents'))
+    # GET – получаем список инцидентов из Go
+    incidents_list = []
+    try:
+        resp = requests.get(f"{GO_API_URL}/api/incidents", timeout=5)
+        if resp.status_code == 200:
+            data = resp.json()
+            incidents_list = data.get("incidents", [])
+        else:
+            flash("Не удалось получить данные инцидентов из Go-сервиса.", "inc_danger")
+    except Exception as e:
+        flash(f"Ошибка при обращении к Go-сервису: {e}", "inc_danger")
 
-    all_incidents = Incident.query.order_by(Incident.year, Incident.month).all()
-    return render_template("incidents.html", incidents=all_incidents)
+    return render_template("incidents.html", incidents=incidents_list)
 
 
 if __name__ == '__main__':

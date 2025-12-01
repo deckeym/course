@@ -1,25 +1,25 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <title>Главная</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
-    <script defer src="{{ url_for('static', filename='js/theme-toggle.js') }}"></script>
+  <meta charset="UTF-8">
+  <title>Главная</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
+  <script defer src="{{ url_for('static', filename='js/theme-toggle.js') }}"></script>
 </head>
 <body>
-    <!-- Кнопка переключения темы -->
-    <div class="theme-toggle">
-        <button id="toggle-theme">🌙</button>
-    </div>
+  <!-- Кнопка переключения темы -->
+  <div class="theme-toggle">
+    <button id="toggle-theme">🌙</button>
+  </div>
 
-    <div class="welcome-container">
-        <h1>Прогнозирование пассажиропотока</h1>
-        <p>Интеллектуальный анализ и предсказание транспортной нагрузки</p>
+  <div class="welcome-container">
+    <h1>Прогнозирование пассажиропотока</h1>
+    <p>Анализ и прогнозирование загрузки пассажирских междугородних поездов</p>
 
-        <div class="action-buttons">
-            <a href="{{ url_for('login') }}" class="btn">Войти</a>
-            <a href="{{ url_for('register') }}" class="btn secondary">Регистрация</a>
-        </div>
+    <div class="action-buttons">
+      <a href="{{ url_for('login') }}" class="btn">Войти</a>
+      <a href="{{ url_for('register') }}" class="btn secondary">Регистрация</a>
     </div>
+  </div>
 </body>
 </html>
