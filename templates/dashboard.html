@@ -7,17 +7,21 @@
     <script defer src="{{ url_for('static', filename='js/theme-toggle.js') }}"></script>
 </head>
 <body>
-    <div class="theme-toggle">
-        <button id="toggle-theme">🌙</button>
-    </div>
-    <div class="dashboard-card">
-        <h2>Здравствуйте, {{ username }}!</h2>
-        <ul>
-            <li><a href="{{ url_for('edit_data') }}">📝 Изменить данные</a></li>
-            <li><a href="{{ url_for('incidents') }}">🚨 Происшествия</a></li>
-            <li><a href="{{ url_for('predict') }}">📊 Сделать прогноз</a></li>
-            <li><a href="{{ url_for('logout') }}">🚪 Выйти</a></li>
-        </ul>
-    </div>
+<div class="theme-toggle">
+    <button id="toggle-theme">🌙</button>
+</div>
+
+<div class="dashboard-card">
+    <h2>Здравствуйте, {{ username }}{% if is_admin %}, администратор{% endif %}!</h2>
+
+    <ul>
+        {% if is_admin %}
+            <li><a href="{{ url_for('edit_data') }}">📝 Изменить данные пассажиропотока</a></li>
+            <li><a href="{{ url_for('incidents') }}">🚨 Инциденты на железной дороге</a></li>
+        {% endif %}
+        <li><a href="{{ url_for('predict') }}">📊 Сделать прогноз пассажиропотока</a></li>
+        <li><a href="{{ url_for('logout') }}">🚪 Выйти</a></li>
+    </ul>
+</div>
 </body>
 </html>

@@ -11,6 +11,9 @@ import os
 import requests
 
 from models import db, PassengerData, Prediction, User, Incident
+from sqlalchemy.exc import DataError
+from functools import wraps
+
 # Следующие импорты не используются, можно удалить при желании
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.compose import ColumnTransformer
@@ -21,22 +24,30 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:4780@db/traffic_d
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.secret_key = "supersecretkey"
 
-# адрес Go-сервиса (можно переопределить переменной окружения GO_API_URL)
 GO_API_URL = os.getenv("GO_API_URL", "http://go_api:8080")
 
 db.init_app(app)
 migrate = Migrate(app, db)
 
 
-# 🔐 Функция-помощник
 def is_admin():
     return session.get("is_admin", False)
+
+
+def admin_required(f):
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        if not session.get("is_admin"):
+            flash("У вас нет прав для этого действия.", "auth_danger")
+            return redirect(url_for("dashboard"))
+        return f(*args, **kwargs)
+    return wrapper
 
 
 with app.app_context():
     db.create_all()
 
-    # Создание администратора при первом запуске
+    # создаём админа, если его нет
     admin = User.query.filter_by(username="admin").first()
     if not admin:
         admin = User(username="admin", is_admin=True)
@@ -45,7 +56,7 @@ with app.app_context():
         db.session.commit()
         print("✅ Админ создан: admin/admin123")
 
-    # Синтетические данные, если пусто
+    # синтетические данные, если таблица пустая
     if PassengerData.query.count() == 0:
         print("📊 Инициализация синтетических данных...")
         years = list(range(2016, 2026))
@@ -58,33 +69,19 @@ with app.app_context():
             for m in months:
                 base = 90
                 passengers = base + seasonal_factor.get(m, 0) + np.random.normal(0, 3)
-                db.session.add(PassengerData(year=y, month=m, passengers=round(passengers, 1)))
+                db.session.add(
+                    PassengerData(year=y, month=m, passengers=round(passengers, 1))
+                )
         db.session.commit()
         print("✅ Синтетические данные добавлены.")
 
-
-def apply_incidents_to_forecast(df, incidents):
-    """
-    Пример функции (если понадобится): применяет влияние происшествий к будущим значениям прогноза.
-    """
-    for incident in incidents:
-        affected_year = incident.year
-        impact = incident.impact
-        df.loc[
-            (df['year'] == affected_year) & (df['date'] > pd.Timestamp.today()),
-            'passengers'
-        ] *= (1 + impact)
-    return df
-
-
-# ---------- Маршруты ----------
 
 @app.route('/')
 def index():
     return render_template('index.html')
 
 
-# Регистрация
+# РЕГИСТРАЦИЯ
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
@@ -92,29 +89,24 @@ def register():
         raw_password = request.form.get('password', '')
 
         username = raw_username.strip()
-        password = raw_password  # не .strip(), но проверим пробелы ниже
+        password = raw_password
 
-        # Пусто?
         if not username or not password:
             flash("Логин и пароль не могут быть пустыми.", "auth_danger")
             return render_template('register.html')
 
-        # Запрет пробельных символов
         if any(ch.isspace() for ch in username) or any(ch.isspace() for ch in password):
             flash("Логин и пароль не должны содержать пробелы.", "auth_danger")
             return render_template('register.html')
 
-        # Минимальные длины
         if len(username) < 3 or len(password) < 8:
             flash("Логин — минимум 3 символа, пароль — минимум 8 символов.", "auth_danger")
             return render_template('register.html')
 
-        # Уникальность
         if User.query.filter_by(username=username).first():
             flash("Имя пользователя уже занято.", "auth_danger")
             return render_template('register.html')
 
-        # Создание пользователя
         new_user = User(username=username)
         new_user.set_password(password)
         db.session.add(new_user)
@@ -125,7 +117,7 @@ def register():
     return render_template('register.html')
 
 
-# Вход
+# ЛОГИН
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -146,7 +138,6 @@ def login():
     return render_template('login.html')
 
 
-# Выход
 @app.route('/logout')
 def logout():
     session.clear()
@@ -154,7 +145,7 @@ def logout():
     return redirect(url_for("login"))
 
 
-# Панель
+# ЛИЧНЫЙ КАБИНЕТ
 @app.route('/dashboard')
 def dashboard():
     if "user_id" not in session:
@@ -162,11 +153,16 @@ def dashboard():
         return redirect(url_for("login"))
 
     user = db.session.get(User, session["user_id"])
-    return render_template('dashboard.html', user=user, username=user.username)
+    return render_template(
+        'dashboard.html',
+        username=user.username,
+        is_admin=user.is_admin
+    )
 
 
-# Редактирование данных пассажиропотока
+# РЕДАКТИРОВАНИЕ ДАННЫХ — ТОЛЬКО АДМИН
 @app.route('/edit', methods=['GET', 'POST'])
+@admin_required
 def edit_data():
     if request.method == 'POST':
         try:
@@ -174,7 +170,6 @@ def edit_data():
             month = int(request.form['month'])
             passengers = int(request.form['passengers'])
 
-            # Разрешаем редактировать только с 2016-01 по 2025-09
             if not (2016 <= year <= 2025):
                 flash("Год должен быть от 2016 до 2025.", "edit_danger")
                 return redirect(url_for('edit_data'))
@@ -183,12 +178,16 @@ def edit_data():
                 flash("Месяц должен быть от 1 до 12.", "edit_danger")
                 return redirect(url_for('edit_data'))
 
-            if year == 2025 and month > 9:
-                flash("Редактирование доступно только до сентября 2025 включительно.", "edit_danger")
+            if passengers < 0:
+                flash("Количество пассажиров поездов не может быть отрицательным.", "edit_danger")
                 return redirect(url_for('edit_data'))
 
-            if passengers < 0:
-                flash("Количество пассажиров не может быть отрицательным.", "edit_danger")
+            MAX_PASSENGERS = 2_000_000_000
+            if passengers > MAX_PASSENGERS:
+                flash(
+                    f"Слишком большое значение пассажиров поездов. Максимум: {MAX_PASSENGERS}.",
+                    "edit_danger",
+                )
                 return redirect(url_for('edit_data'))
 
             entry = PassengerData.query.filter_by(year=year, month=month).first()
@@ -197,7 +196,14 @@ def edit_data():
                 return redirect(url_for('edit_data'))
 
             entry.passengers = passengers
-            db.session.commit()
+
+            try:
+                db.session.commit()
+            except DataError:
+                db.session.rollback()
+                flash("Ошибка: число превышает допустимый диапазон.", "edit_danger")
+                return redirect(url_for('edit_data'))
+
             flash(f"Данные за {year}-{month:02d} обновлены.", "edit_success")
             return redirect(url_for('dashboard'))
 
@@ -205,28 +211,30 @@ def edit_data():
             flash("Проверьте корректность введённых значений.", "edit_danger")
             return redirect(url_for('edit_data'))
 
-    # --- GET: подготовим данные для предпросмотра и таблицы ---
     records = PassengerData.query.order_by(PassengerData.year, PassengerData.month).all()
     data_map = {f"{r.year}-{r.month:02d}": r.passengers for r in records}
     return render_template('edit_data.html', records=records, data_map=data_map)
 
 
-# Прогноз
+# ПРОГНОЗ — ДОСТУПЕН ВСЕМ АВТОРИЗОВАННЫМ
 @app.route('/predict', methods=['GET', 'POST'])
 def predict():
+    if "user_id" not in session:
+        flash("Сначала войдите в систему.", "auth_warning")
+        return redirect(url_for("login"))
+
     prediction = None
     plot_url = None
 
     if request.method == 'POST':
         try:
-            year = int(request.form['year'].strip())
-            month = int(request.form['month'].strip())
+            year = int(request.form['year'])
+            month = int(request.form['month'])
 
             if not (2016 <= year <= 2030) or not (1 <= month <= 12):
-                flash("Введите год от 2016 до 2030 и месяц от 1 до 12!", "danger")
+                flash("Введите корректный год и месяц.", "danger")
                 return redirect(url_for("predict"))
 
-            # Получение данных
             data = PassengerData.query.all()
             incidents = Incident.query.all()
 
@@ -234,28 +242,27 @@ def predict():
             df = pd.DataFrame(rows)
             df['date'] = pd.to_datetime(df[['year', 'month']].assign(day=1))
 
-            # Обработка инцидентов с учётом продолжительности и постепенного восстановления
-            incident_effects = pd.Series(1.0, index=pd.date_range(start='2026-01-01', end='2030-12-01', freq='MS'))
+            incident_effects = pd.Series(
+                1.0,
+                index=pd.date_range(start='2026-01-01', end='2030-12-01', freq='MS')
+            )
 
             for inc in incidents:
-                start = pd.to_datetime(f"{inc.year}-{inc.month:02d}-01", format="%Y-%m-%d")
+                start = pd.to_datetime(f"{inc.year}-{inc.month:02d}-01")
                 for i in range(inc.duration):
                     month_inc = start + pd.DateOffset(months=i)
                     if month_inc in incident_effects.index:
                         decay = 1 + inc.impact * (1 - i / inc.duration)
                         incident_effects[month_inc] *= decay
 
-            # Добавляем признаки
             df['sin_month'] = np.sin(2 * np.pi * df['month'] / 12)
             df['cos_month'] = np.cos(2 * np.pi * df['month'] / 12)
 
-            # Предсказываемая дата
-            pred_date = pd.to_datetime(f"{year}-{month:02d}-01", format="%Y-%m-%d")
-
-            X = df[['year', 'sin_month', 'cos_month']]
-            y = df['passengers']
+            pred_date = pd.to_datetime(f"{year}-{month:02d}-01")
 
             model = LinearRegression()
+            X = df[['year', 'sin_month', 'cos_month']]
+            y = df['passengers']
             model.fit(X, y)
 
             start_date = pred_date - pd.DateOffset(years=2)
@@ -275,46 +282,40 @@ def predict():
                 predicted = model.predict(X_missing)
                 df_full.loc[missing, 'passengers'] = predicted
 
-            # Применяем влияние инцидентов
             df_full['adjusted'] = df_full['passengers']
+
             for date in df_full['date']:
                 if date in incident_effects.index:
                     df_full.loc[df_full['date'] == date, 'adjusted'] *= incident_effects[date]
 
             prediction = df_full.loc[df_full['date'] == pred_date, 'adjusted'].values[0]
+
             pred = Prediction(year=year, month=month, predicted_passengers=int(prediction))
             db.session.add(pred)
             db.session.commit()
 
-            # Построение графика
             plt.figure(figsize=(10, 4))
             is_real = df_full['date'].isin(df['date'])
             is_pred = ~is_real
 
-            # График фактических данных
             plt.plot(df_full.loc[is_real, 'date'], df_full.loc[is_real, 'adjusted'],
                      marker='o', label='Факт')
 
-            # График прогнозных данных
             plt.plot(df_full.loc[is_pred, 'date'], df_full.loc[is_pred, 'adjusted'],
-                     marker='o', linestyle='dashed', color='blue', label='Прогноз')
+                     marker='o', linestyle='dashed', label='Прогноз')
 
-            # Прогнозируемая точка
-            plt.scatter([pred_date], [prediction], color='red', label=f'Прогноз ({prediction:.0f})', zorder=5)
+            plt.scatter([pred_date], [prediction], color='red',
+                        label=f'Прогноз ({prediction:.0f})', zorder=5)
             plt.annotate(f'{prediction:.0f}', xy=(pred_date, prediction), xytext=(5, 5),
                          textcoords='offset points', color='red')
 
-            # Убедимся, что ось X отображает все даты правильно
             plt.xticks(df_full['date'], df_full['date'].dt.strftime('%Y-%m'), rotation=45)
-
-            # Подписи и оформление
-            plt.title('Пассажиропоток с прогнозом')
-            plt.ylabel('Количество пассажиров')
+            plt.title('Пассажиропоток поездов с прогнозом')
+            plt.ylabel('Количество пассажиров поездов')
             plt.grid(True)
             plt.legend()
             plt.tight_layout()
 
-            # Сохраняем и отображаем график
             img = io.BytesIO()
             plt.savefig(img, format='png')
             img.seek(0)
@@ -322,14 +323,15 @@ def predict():
             plt.close()
 
         except Exception as e:
-            flash(f"Ошибка при обработке прогноза: {str(e)}", "danger")
+            flash(f"Ошибка вычисления прогноза: {str(e)}", "danger")
             return redirect(url_for("predict"))
 
     return render_template('predict.html', prediction=prediction, plot_url=plot_url)
 
 
-# Инциденты – реализованы в Go-сервисе, Flask только проксирует запросы
+# ИНЦИДЕНТЫ — ТОЛЬКО АДМИН
 @app.route('/incidents', methods=['GET', 'POST'])
+@admin_required
 def incidents():
     if request.method == 'POST':
         payload = {
@@ -344,17 +346,16 @@ def incidents():
             resp = requests.post(f"{GO_API_URL}/api/incidents", json=payload, timeout=5)
             data = resp.json()
         except Exception as e:
-            flash(f"Ошибка при обращении к Go-сервису: {e}", "inc_danger")
+            flash(f"Ошибка обращения к Go-сервису: {e}", "inc_danger")
             return redirect(url_for("incidents"))
 
         if resp.status_code != 201:
-            flash(data.get("error", "Ошибка Go-сервиса при добавлении инцидента."), "inc_danger")
+            flash(data.get("error", "Ошибка Go-сервиса."), "inc_danger")
             return redirect(url_for("incidents"))
 
-        flash("Инцидент добавлен (через Go-сервис).", "inc_success")
+        flash("Инцидент успешно добавлен.", "inc_success")
         return redirect(url_for("incidents"))
 
-    # GET – получаем список инцидентов из Go
     incidents_list = []
     try:
         resp = requests.get(f"{GO_API_URL}/api/incidents", timeout=5)
@@ -362,9 +363,9 @@ def incidents():
             data = resp.json()
             incidents_list = data.get("incidents", [])
         else:
-            flash("Не удалось получить данные инцидентов из Go-сервиса.", "inc_danger")
+            flash("Не удалось получить список инцидентов.", "inc_danger")
     except Exception as e:
-        flash(f"Ошибка при обращении к Go-сервису: {e}", "inc_danger")
+        flash(f"Ошибка обращения к Go-сервису: {e}", "inc_danger")
 
     return render_template("incidents.html", incidents=incidents_list)
 

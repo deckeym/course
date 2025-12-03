@@ -32,17 +32,11 @@ func main() {
 	}
 
 	var err error
-	db, err = sql.Open("postgres", dsn)
+	db, err = waitForDB(dsn)
 	if err != nil {
-		log.Fatalf("open db: %v", err)
+		log.Fatalf("cannot connect to db: %v", err)
 	}
-	db.SetMaxOpenConns(5)
-	db.SetMaxIdleConns(5)
-	db.SetConnMaxLifetime(5 * time.Minute)
-
-	if err = db.Ping(); err != nil {
-		log.Fatalf("ping db: %v", err)
-	}
+	log.Println("✅ DB is ready, starting HTTP server")
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/healthz", healthHandler)
@@ -56,6 +50,36 @@ func main() {
 
 	if err := http.ListenAndServe(addr, mux); err != nil {
 		log.Fatal(err)
+	}
+}
+
+// ждём, пока postgres станет доступен, не падаем с первого же ping
+func waitForDB(dsn string) (*sql.DB, error) {
+	const (
+		maxOpenConns    = 5
+		maxIdleConns    = 5
+		connMaxLifetime = 5 * time.Minute
+		retryDelay      = 2 * time.Second
+	)
+
+	for {
+		db, err := sql.Open("postgres", dsn)
+		if err != nil {
+			log.Printf("open db error: %v", err)
+		} else {
+			db.SetMaxOpenConns(maxOpenConns)
+			db.SetMaxIdleConns(maxIdleConns)
+			db.SetConnMaxLifetime(connMaxLifetime)
+
+			if err = db.Ping(); err == nil {
+				return db, nil
+			}
+			log.Printf("ping db error: %v", err)
+			_ = db.Close()
+		}
+
+		log.Printf("⏳ DB is not ready yet, retrying in %v...", retryDelay)
+		time.Sleep(retryDelay)
 	}
 }
 
