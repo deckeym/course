@@ -59,7 +59,8 @@ with app.app_context():
     # синтетические данные, если таблица пустая
     if PassengerData.query.count() == 0:
         print("📊 Инициализация синтетических данных...")
-        years = list(range(2016, 2026))
+        # Делаем данные сразу до 2030 года, чтобы инциденты могли ссылаться
+        years = list(range(2016, 2031))
         months = list(range(1, 13))
         seasonal_factor = {
             1: 70, 2: 75, 3: 80, 4: 85, 5: 95, 6: 110,
@@ -70,7 +71,7 @@ with app.app_context():
                 base = 90
                 passengers = base + seasonal_factor.get(m, 0) + np.random.normal(0, 3)
                 db.session.add(
-                    PassengerData(year=y, month=m, passengers=round(passengers, 1))
+                    PassengerData(year=y, month=m, passengers=int(round(passengers)))
                 )
         db.session.commit()
         print("✅ Синтетические данные добавлены.")
@@ -170,8 +171,8 @@ def edit_data():
             month = int(request.form['month'])
             passengers = int(request.form['passengers'])
 
-            if not (2016 <= year <= 2025):
-                flash("Год должен быть от 2016 до 2025.", "edit_danger")
+            if not (2016 <= year <= 2030):
+                flash("Год должен быть от 2016 до 2030.", "edit_danger")
                 return redirect(url_for('edit_data'))
 
             if not (1 <= month <= 12):
@@ -244,7 +245,7 @@ def predict():
 
             incident_effects = pd.Series(
                 1.0,
-                index=pd.date_range(start='2026-01-01', end='2030-12-01', freq='MS')
+                index=pd.date_range(start='2016-01-01', end='2030-12-01', freq='MS')
             )
 
             for inc in incidents:
@@ -290,7 +291,14 @@ def predict():
 
             prediction = df_full.loc[df_full['date'] == pred_date, 'adjusted'].values[0]
 
-            pred = Prediction(year=year, month=month, predicted_passengers=int(prediction))
+            # 🔗 сохраняем, привязывая к пользователю (user_id) и периоду (FK на passenger_data)
+            user_id = session.get("user_id")
+            pred = Prediction(
+                year=year,
+                month=month,
+                predicted_passengers=int(prediction),
+                user_id=user_id,
+            )
             db.session.add(pred)
             db.session.commit()
 
