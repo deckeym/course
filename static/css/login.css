@@ -1,172 +1,453 @@
-/* === Тема: переменные и фон, как на странице прогноза === */
-:root { --card-bg: #ffffff; }
+/* Базовые переменные — в тон index.css */
+:root {
+  --bg: #f3f7fb;
+  --bg-elevated: #ffffff;
+  --accent: #008dff;
+  --accent-soft: rgba(0, 141, 255, 0.08);
+  --accent-strong: #0369a1;
+  --border-subtle: #d2dce8;
+  --text-main: #0b1120;
+  --text-muted: #6b7280;
+  --shadow-soft: 0 22px 60px rgba(15, 23, 42, 0.32);
+  --radius-xl: 26px;
+  --radius-lg: 20px;
+  --danger: #ef4444;
+  --success: #22c55e;
+  --warning: #f59e0b;
+  --info: #0ea5e9;
+}
 
 html[data-theme="dark"] {
-  --card-bg: #151718;
+  --bg: #020617;
+  --bg-elevated: #020617;
+  --accent: #38bdf8;
+  --accent-soft: rgba(56, 189, 248, 0.13);
+  --accent-strong: #0ea5e9;
+  --border-subtle: #1f2937;
+  --text-main: #e5e7eb;
+  --text-muted: #9ca3af;
+  --shadow-soft: 0 24px 70px rgba(0, 0, 0, 0.94);
 }
 
-html, body { height: 100%; }
-
-body {
-  background: #eef9fb;           /* светлая по умолчанию */
-  color: #0b2e2f;
-}
-
-html[data-theme="dark"] body {
-  background: #0e0f10 !important; /* как в прогнозе */
-  color: #e7ecef !important;
-}
-
-
-/* ===== БАЗА ===== */
 *,
 *::before,
-*::after { box-sizing: border-box; }
+*::after {
+  box-sizing: border-box;
+}
 
 html, body {
+  margin: 0;
+  padding: 0;
   height: 100%;
 }
 
 body {
-  margin: 0;
-  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji", sans-serif;
-  background: #eef9fb;               /* мягкий фон */
-  color: #0b2e2f;
-  display: grid;
-  place-items: center;                /* центрируем карточку по вертикали и горизонтали */
-  padding: 24px;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background:
+    radial-gradient(circle at top left, #e0f2fe 0, transparent 55%),
+    var(--bg);
+  color: var(--text-main);
 }
 
-/* кнопка темы/меню не мешает центровке */
-header {
-  position: fixed;
-  top: 12px;
-  left: 12px;
-}
+/* Переключатель темы */
 .theme-toggle {
   position: fixed;
-  top: 12px;
-  right: 12px;
+  top: 18px;
+  right: 20px;
+  z-index: 40;
 }
 
-/* ===== КАРТОЧКА ===== */
-.login-container {
-  width: min(480px, calc(100vw - 32px));
-  background: var(--card-bg, #ffffff);
-  border-radius: 18px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, .08);
-  padding: 28px 26px 24px;
+.theme-toggle button {
+  border: none;
+  border-radius: 999px;
+  padding: 7px 10px;
+  font-size: 18px;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.35);
 }
 
-.login-container h2 {
-  margin: 0 0 18px 0;
-  text-align: center;
-  font-weight: 700;
-  color: #0b574f;
+html[data-theme="dark"] .theme-toggle button {
+  background: #020617;
+  color: #e5e7eb;
 }
 
-/* ===== FLASH ===== */
-.flash-messages { margin: 10px 0 14px; }
-.flash {
-  padding: 10px 12px;
-  border-radius: 10px;
-  font-size: 14px;
-  margin-bottom: 8px;
-}
-.flash.auth_success { background: #d1e7dd; color: #0f5132; }
-.flash.auth_warning { background: #fff3cd; color: #664d03; }
-.flash.auth_info    { background: #cff4fc; color: #055160; }
-.flash.auth_danger  { background: #f8d7da; color: #842029; }
-
-/* ===== ФОРМА ===== */
-form {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 8px;
+/* Оболочка страницы входа */
+.login-page {
+  min-height: 100vh;
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 20px 18px 28px;
+  display: flex;
+  flex-direction: column;
 }
 
-label {
-  font-size: 14px;
-  line-height: 1.2;
-  margin-top: 10px;
-  color: #2d3a3a;
+/* Верхняя панель */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
 }
 
-input[type="text"],
-input[type="password"] {
-  width: 100%;
-  height: 44px;                   /* одинаковая высота */
-  padding: 10px 14px;
-  padding-right: 44px;            /* запас под иконки менеджера паролей */
-  border: 1px solid #d7e3ea;
-  background: #edf6ff;
+.back-link {
+  font-size: 13px;
+  text-decoration: none;
+  color: var(--text-muted);
+}
+
+.back-link:hover {
+  color: var(--accent-strong);
+}
+
+/* Лого */
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.logo-mark {
+  width: 30px;
+  height: 30px;
   border-radius: 12px;
-  outline: none;
-  transition: border-color .15s ease, box-shadow .15s ease;
+  background: linear-gradient(135deg, #0ea5e9, #22c55e);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: 700;
+  font-size: 14px;
+  color: #f9fafb;
+  box-shadow: 0 10px 25px rgba(14, 165, 233, 0.55);
+}
+
+.logo-text {
+  font-weight: 600;
+  letter-spacing: 0.03em;
   font-size: 15px;
 }
 
-input[type="text"]:focus,
-input[type="password"]:focus {
-  border-color: #6bb7ff;
-  box-shadow: 0 0 0 3px rgba(13, 110, 253, .15);
+/* Основная раскладка */
+.login-shell {
+  flex: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+  gap: 22px;
+  align-items: stretch;
 }
 
-button[type="submit"] {
-  margin-top: 16px;
-  height: 44px;
-  border: 0;
+/* Карточка входа */
+.login-card {
+  border-radius: var(--radius-xl);
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: var(--shadow-soft);
+  padding: 22px 22px 24px;
+  backdrop-filter: blur(18px);
+}
+
+html[data-theme="dark"] .login-card {
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.97), rgba(15, 23, 42, 0.98));
+}
+
+.login-header .eyebrow {
+  margin: 0 0 6px;
+  font-size: 12px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accent-strong);
+}
+
+.login-header h1 {
+  margin: 0 0 8px;
+  font-size: 24px;
+}
+
+.login-header .subtitle {
+  margin: 0 0 16px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+/* Flash-сообщения */
+.flash-messages {
+  margin-bottom: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.flash {
+  font-size: 13px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+}
+
+.flash.auth_success {
+  background: rgba(34, 197, 94, 0.08);
+  border-color: rgba(34, 197, 94, 0.4);
+  color: #166534;
+}
+
+html[data-theme="dark"] .flash.auth_success {
+  color: #bbf7d0;
+}
+
+.flash.auth_warning {
+  background: rgba(245, 158, 11, 0.08);
+  border-color: rgba(245, 158, 11, 0.5);
+  color: #92400e;
+}
+
+html[data-theme="dark"] .flash.auth_warning {
+  color: #fed7aa;
+}
+
+.flash.auth_info {
+  background: rgba(14, 165, 233, 0.08);
+  border-color: rgba(14, 165, 233, 0.5);
+  color: #075985;
+}
+
+html[data-theme="dark"] .flash.auth_info {
+  color: #e0f2fe;
+}
+
+.flash.auth_danger {
+  background: rgba(239, 68, 68, 0.08);
+  border-color: rgba(239, 68, 68, 0.55);
+  color: #991b1b;
+}
+
+html[data-theme="dark"] .flash.auth_danger {
+  color: #fecaca;
+}
+
+/* Форма входа */
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.login-form label {
+  font-size: 13px;
+}
+
+.field-wrapper {
+  margin-bottom: 6px;
+}
+
+.login-form input {
+  width: 100%;
+  padding: 9px 10px;
   border-radius: 12px;
-  background: #0d6efd;
-  color: #fff;
+  border: 1px solid var(--border-subtle);
+  font-size: 14px;
+  outline: none;
+  background: rgba(255, 255, 255, 0.9);
+}
+
+html[data-theme="dark"] .login-form input {
+  background: #020617;
+  color: var(--text-main);
+}
+
+.login-form input:focus {
+  border-color: var(--accent-strong);
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.25);
+}
+
+/* Кнопка входа */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  border: none;
+  padding: 10px 18px;
+  font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  transition: transform .05s ease, filter .15s ease, background .15s ease;
-}
-button[type="submit"]:hover { filter: brightness(1.05); }
-button[type="submit"]:active { transform: translateY(1px); }
-
-/* ссылка под кнопкой */
-.login-container p {
-  text-align: center;
-  margin: 12px 0 0 0;
-}
-.login-container a { color: #0b6b77; }
-.login-container a:hover { text-decoration: underline; }
-
-/* ===== АВТОФИЛЛ/ИКОНКИ БРАУЗЕРА ===== */
-input::-ms-reveal,
-input::-ms-clear { display: none; }
-
-input:-webkit-autofill {
-  -webkit-box-shadow: 0 0 0 40px #edf6ff inset;  /* цвет как у input background */
-  -webkit-text-fill-color: inherit;
-  caret-color: inherit;
+  text-decoration: none;
+  transition:
+    transform 0.12s ease,
+    box-shadow 0.12s ease,
+    opacity 0.1s ease;
 }
 
-/* убираем стрелки у number (на всякий) */
-input[type=number]::-webkit-outer-spin-button,
-input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-input[type=number] { -moz-appearance: textfield; }
+.btn-primary {
+  margin-top: 6px;
+  width: 100%;
+  background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+  color: #f9fafb;
+  box-shadow: 0 16px 40px rgba(37, 99, 235, 0.52);
+}
 
-/* ===== ТЁМНАЯ ТЕМА (если переключатель выставляет data-theme="dark") ===== */
-:root { --card-bg: #ffffff; }
-[data-theme="dark"] {
-  --card-bg: #151718;
-  color: #e7ecef;
-  background: #0e0f10;
+.btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 22px 55px rgba(37, 99, 235, 0.65);
 }
-[data-theme="dark"] .login-container h2 { color: #cfe7e4; }
-[data-theme="dark"] .login-container {
-  box-shadow: 0 10px 30px rgba(0, 0, 0, .45);
+
+.btn-primary:active {
+  transform: translateY(0);
+  box-shadow: none;
+  opacity: 0.9;
 }
-[data-theme="dark"] input[type="text"],
-[data-theme="dark"] input[type="password"] {
-  background: #1e2224;
-  border-color: #30373a;
-  color: #e7ecef;
+
+.btn-primary:focus-visible {
+  outline: 2px solid var(--accent-strong);
+  outline-offset: 2px;
 }
-[data-theme="dark"] input:-webkit-autofill {
-  -webkit-box-shadow: 0 0 0 40px #1e2224 inset;
-  -webkit-text-fill-color: #e7ecef;
+
+/* Подсказка о регистрации */
+.register-hint {
+  margin-top: 12px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.register-hint a {
+  color: var(--accent-strong);
+  text-decoration: none;
+}
+
+.register-hint a:hover {
+  text-decoration: underline;
+}
+
+/* Правая боковая панель */
+.login-side {
+  display: flex;
+  align-items: stretch;
+}
+
+.side-card {
+  border-radius: var(--radius-xl);
+  padding: 18px 18px 20px;
+  background: radial-gradient(circle at top left, rgba(56, 189, 248, 0.3), transparent 60%),
+              #020617;
+  color: #e5e7eb;
+  box-shadow: var(--shadow-soft);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.side-title {
+  margin: 0 0 6px;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.side-text {
+  margin: 0 0 14px;
+  font-size: 13px;
+  color: #cbd5f5;
+}
+
+/* Метрики */
+.side-metrics {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+  font-size: 12px;
+  margin-bottom: 10px;
+}
+
+.metric {
+  padding: 8px 9px;
+  border-radius: 12px;
+  background: rgba(15, 23, 42, 0.9);
+  border: 1px solid rgba(148, 163, 184, 0.5);
+}
+
+.metric-label {
+  display: block;
+  color: #9ca3af;
+  margin-bottom: 3px;
+}
+
+.metric-value {
+  font-weight: 600;
+}
+
+/* Пилюли */
+.side-footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: 11px;
+}
+
+.pill {
+  padding: 4px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.7);
+}
+
+.pill-green {
+  background: rgba(34, 197, 94, 0.12);
+}
+
+.pill-blue {
+  background: rgba(59, 130, 246, 0.16);
+}
+
+/* Адаптив */
+@media (max-width: 880px) {
+  .login-shell {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .login-side {
+    display: none;
+  }
+
+  .login-card {
+    padding-inline: 18px;
+  }
+}
+
+@media (max-width: 640px) {
+  .login-page {
+    padding-inline: 14px;
+  }
+
+  .logo-text {
+    display: none;
+  }
+}
+
+/* Оболочка страницы входа */
+.login-page {
+  min-height: 100vh;
+  /* растягиваем на всю ширину, чтобы фон красиво ложился */
+  max-width: 100%;
+  margin: 0;
+  padding: 20px 18px 28px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Верхняя панель как была */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+/* Зона, где лежит форма — центрируем её */
+.login-shell {
+  flex: 1;                       /* занимает всё оставшееся место по высоте */
+  display: flex;
+  justify-content: center;       /* по горизонтали по центру */
+  align-items: center;           /* по вертикали по центру */
+}
+
+/* Чтобы карточка не растягивалась слишком сильно на широких экранах */
+.login-card {
+  width: 100%;
+  max-width: 420px;              /* можно по вкусу 400–480 */
 }

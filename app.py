@@ -26,6 +26,9 @@ app.secret_key = "supersecretkey"
 
 GO_API_URL = os.getenv("GO_API_URL", "http://go_api:8080")
 
+# До какого года данные считаются фактическими (остальное — прогноз)
+MAX_REAL_YEAR = int(os.getenv("MAX_REAL_YEAR", "2025"))
+
 db.init_app(app)
 migrate = Migrate(app, db)
 
@@ -79,7 +82,7 @@ with app.app_context():
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    return render_template('index.html', current_year=datetime.now().year)
 
 
 # РЕГИСТРАЦИЯ
@@ -171,8 +174,12 @@ def edit_data():
             month = int(request.form['month'])
             passengers = int(request.form['passengers'])
 
-            if not (2016 <= year <= 2030):
-                flash("Год должен быть от 2016 до 2030.", "edit_danger")
+            # редактируем только фактический диапазон
+            if not (2016 <= year <= MAX_REAL_YEAR):
+                flash(
+                    f"Редактирование возможно только для фактического периода 2016–{MAX_REAL_YEAR}.",
+                    "edit_danger",
+                )
                 return redirect(url_for('edit_data'))
 
             if not (1 <= month <= 12):
@@ -212,17 +219,25 @@ def edit_data():
             flash("Проверьте корректность введённых значений.", "edit_danger")
             return redirect(url_for('edit_data'))
 
-    records = PassengerData.query.order_by(PassengerData.year, PassengerData.month).all()
+    # в превью показываем только фактические годы
+    records = (
+        PassengerData.query
+        .filter(PassengerData.year <= MAX_REAL_YEAR)
+        .order_by(PassengerData.year, PassengerData.month)
+        .all()
+    )
     data_map = {f"{r.year}-{r.month:02d}": r.passengers for r in records}
-    return render_template('edit_data.html', records=records, data_map=data_map)
+    return render_template(
+        'edit_data.html',
+        records=records,
+        data_map=data_map,
+        max_real_year=MAX_REAL_YEAR,
+    )
 
 
-# ПРОГНОЗ — ДОСТУПЕН ВСЕМ АВТОРИЗОВАННЫМ
+# ПРОГНОЗ — ДОСТУПЕН ВСЕМ ПОЛЬЗОВАТЕЛЯМ
 @app.route('/predict', methods=['GET', 'POST'])
 def predict():
-    if "user_id" not in session:
-        flash("Сначала войдите в систему.", "auth_warning")
-        return redirect(url_for("login"))
 
     prediction = None
     plot_url = None
@@ -236,7 +251,13 @@ def predict():
                 flash("Введите корректный год и месяц.", "danger")
                 return redirect(url_for("predict"))
 
-            data = PassengerData.query.all()
+            # Берём только фактические данные до MAX_REAL_YEAR
+            data = (
+                PassengerData.query
+                .filter(PassengerData.year <= MAX_REAL_YEAR)
+                .all()
+            )
+            # Инциденты могут быть и после MAX_REAL_YEAR — они влияют на будущий прогноз
             incidents = Incident.query.all()
 
             rows = [{'year': d.year, 'month': d.month, 'passengers': d.passengers} for d in data]
@@ -250,10 +271,11 @@ def predict():
 
             for inc in incidents:
                 start = pd.to_datetime(f"{inc.year}-{inc.month:02d}-01")
-                for i in range(inc.duration):
+                duration = inc.duration or 1
+                for i in range(duration):
                     month_inc = start + pd.DateOffset(months=i)
                     if month_inc in incident_effects.index:
-                        decay = 1 + inc.impact * (1 - i / inc.duration)
+                        decay = 1 + inc.impact * (1 - i / duration)
                         incident_effects[month_inc] *= decay
 
             df['sin_month'] = np.sin(2 * np.pi * df['month'] / 12)
@@ -291,7 +313,7 @@ def predict():
 
             prediction = df_full.loc[df_full['date'] == pred_date, 'adjusted'].values[0]
 
-            # 🔗 сохраняем, привязывая к пользователю (user_id) и периоду (FK на passenger_data)
+            # 🔗 сохраняем прогноз, привязывая к пользователю (user_id)
             user_id = session.get("user_id")
             pred = Prediction(
                 year=year,
@@ -306,16 +328,35 @@ def predict():
             is_real = df_full['date'].isin(df['date'])
             is_pred = ~is_real
 
-            plt.plot(df_full.loc[is_real, 'date'], df_full.loc[is_real, 'adjusted'],
-                     marker='o', label='Факт')
+            plt.plot(
+                df_full.loc[is_real, 'date'],
+                df_full.loc[is_real, 'adjusted'],
+                marker='o',
+                label='Факт'
+            )
 
-            plt.plot(df_full.loc[is_pred, 'date'], df_full.loc[is_pred, 'adjusted'],
-                     marker='o', linestyle='dashed', label='Прогноз')
+            plt.plot(
+                df_full.loc[is_pred, 'date'],
+                df_full.loc[is_pred, 'adjusted'],
+                marker='o',
+                linestyle='dashed',
+                label='Прогноз'
+            )
 
-            plt.scatter([pred_date], [prediction], color='red',
-                        label=f'Прогноз ({prediction:.0f})', zorder=5)
-            plt.annotate(f'{prediction:.0f}', xy=(pred_date, prediction), xytext=(5, 5),
-                         textcoords='offset points', color='red')
+            plt.scatter(
+                [pred_date],
+                [prediction],
+                color='red',
+                label=f'Прогноз ({prediction:.0f})',
+                zorder=5
+            )
+            plt.annotate(
+                f'{prediction:.0f}',
+                xy=(pred_date, prediction),
+                xytext=(5, 5),
+                textcoords='offset points',
+                color='red'
+            )
 
             plt.xticks(df_full['date'], df_full['date'].dt.strftime('%Y-%m'), rotation=45)
             plt.title('Пассажиропоток поездов с прогнозом')
@@ -334,7 +375,104 @@ def predict():
             flash(f"Ошибка вычисления прогноза: {str(e)}", "danger")
             return redirect(url_for("predict"))
 
-    return render_template('predict.html', prediction=prediction, plot_url=plot_url)
+    return render_template(
+        'predict.html',
+        prediction=prediction,
+        plot_url=plot_url,
+        is_admin=is_admin(),
+        max_real_year=MAX_REAL_YEAR,
+    )
+
+
+# СТАТИСТИКА — ДОСТУПНА ВСЕМ ПОЛЬЗОВАТЕЛЯМ
+@app.route('/statistics', methods=['GET', 'POST'])
+def statistics():
+
+    selected_year = None
+    rows = []
+
+    if request.method == 'POST':
+        year_raw = request.form.get('year', '').strip()
+
+        try:
+            year = int(year_raw)
+        except (TypeError, ValueError):
+            flash("Введите корректный год.", "danger")
+            return redirect(url_for('statistics'))
+
+        # по условию – только 2016–2024
+        if not (2016 <= year <= 2024):
+            flash("Год должен быть в диапазоне 2016–2024.", "danger")
+            return redirect(url_for('statistics'))
+
+        selected_year = year
+
+        # данные пассажиропотока за выбранный год
+        data = (
+            PassengerData.query
+            .filter_by(year=year)
+            .order_by(PassengerData.month)
+            .all()
+        )
+        data_by_month = {d.month: d for d in data}
+
+        # все инциденты (будем отмечать месяцы, на которые они влияют)
+        incidents = Incident.query.all()
+
+        # месяц -> список текстовых описаний инцидентов
+        month_incidents = {m: [] for m in range(1, 13)}
+
+        for inc in incidents:
+            start_month = inc.month
+            start_year = inc.year
+            duration = inc.duration or 1
+
+            for i in range(duration):
+                m = start_month + i
+                y = start_year
+
+                # корректируем год/месяц, если вышли за пределы года
+                while m > 12:
+                    m -= 12
+                    y += 1
+
+                if y == year and 1 <= m <= 12:
+                    desc = inc.description or "Инцидент"
+                    text = f"{desc} (влияние {inc.impact:.2f}, {duration} мес.)"
+                    month_incidents[m].append(text)
+
+        month_names = {
+            1: "Январь", 2: "Февраль", 3: "Март", 4: "Апрель",
+            5: "Май", 6: "Июнь", 7: "Июль", 8: "Август",
+            9: "Сентябрь", 10: "Октябрь", 11: "Ноябрь", 12: "Декабрь",
+        }
+
+        for m in range(1, 13):
+            record = data_by_month.get(m)
+            total = record.passengers if record else 0
+
+            # временное разбиение на Пригородное / Дальнее следование
+            suburban = int(total * 0.7)
+            long_distance = total - suburban
+
+            inc_list = month_incidents[m]
+
+            rows.append({
+                "month": m,
+                "month_name": month_names[m],
+                "suburban": suburban,
+                "long_distance": long_distance,
+                "total": total,
+                "incidents": inc_list,
+                "has_incident": bool(inc_list),
+            })
+
+    return render_template(
+        'statistics.html',
+        selected_year=selected_year,
+        rows=rows,
+        is_admin=is_admin(),
+    )
 
 
 # ИНЦИДЕНТЫ — ТОЛЬКО АДМИН

@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Статистика пассажиропотока</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/statistics.css') }}">
+    <script defer src="{{ url_for('static', filename='js/theme-toggle.js') }}"></script>
+</head>
+<body>
+<div class="theme-toggle">
+    <button id="toggle-theme">🌙</button>
+</div>
+
+<div class="stats-page">
+    <div class="bg-orbit bg-orbit-1"></div>
+    <div class="bg-orbit bg-orbit-2"></div>
+
+    <header class="stats-topbar">
+        {% if is_admin %}
+            <a href="{{ url_for('dashboard') }}" class="top-back">
+                ← Личный кабинет
+            </a>
+        {% else %}
+            <a href="{{ url_for('index') }}" class="top-back">
+                ← Главная страница
+            </a>
+        {% endif %}
+
+        <div class="top-brand">
+            <div class="brand-mark">54</div>
+            <div class="brand-text">
+                <span class="brand-label">54TrafficInsight</span>
+                <span class="brand-sub">Статистика пассажиропотока</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="stats-layout">
+        <section class="stats-main-card">
+            <div class="stats-main-header">
+                <div>
+                    <p class="eyebrow">Аналитика • Пригородное • Дальнее</p>
+                    <h1>📊 Статистика пассажиропотока</h1>
+                    <p class="subtitle">
+                        Выберите год (2016–2024), чтобы увидеть распределение пассажиропотока
+                        по месяцам.
+                    </p>
+                </div>
+                <div class="year-chip">
+                    <span>Текущий год выборки</span>
+                    <strong>{{ selected_year or 2024 }}</strong>
+                </div>
+            </div>
+
+            <form method="post" class="year-form">
+                <div class="year-form-inner">
+                    <div class="year-field">
+                        <label for="year">Год</label>
+                        <input
+                            type="number"
+                            id="year"
+                            name="year"
+                            min="2016"
+                            max="2024"
+                            required
+                            value="{{ selected_year or 2024 }}"
+                        >
+                    </div>
+                    <button type="submit" class="btn-primary">Показать статистику</button>
+                </div>
+            </form>
+
+            {% if rows %}
+                {% set total_passengers = rows|sum(attribute='total') %}
+                {% set months_with_incidents = rows|selectattr('has_incident')|list|length %}
+
+                <div class="chips-row">
+                    <div class="chip">
+                        <span class="chip-label">Всего пассажиров за год</span>
+                        <span class="chip-value">
+                            {{ "{:,.0f}".format(total_passengers).replace(",", " ") }}
+                        </span>
+                    </div>
+                </div>
+
+                <div class="legend-row">
+                    <div class="legend-item">
+                        <span class="legend-pill legend-pill-suburban"></span>
+                        <span>Пригородное следование</span>
+                        <span class="legend-pill legend-pill-long"></span>
+                        <span>Дальнее следование</span>
+                    </div>
+                </div>
+
+                <div class="table-wrapper">
+                    <table class="stats-table">
+                        <thead>
+                            <tr>
+                                <th>Месяц</th>
+                                <th>Пригородное</th>
+                                <th>Дальнее</th>
+                                <th>Всего</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        {% for row in rows %}
+                            <tr class="row-body {% if row.has_incident %}has-incident{% endif %}">
+                                <td class="month-cell">
+                                    <span class="month-name">{{ row.month_name }}</span>
+                                    <span class="month-index">{{ "%02d"|format(row.month) }}</span>
+                                </td>
+                                <td class="num suburban">
+                                    {{ "{:,.0f}".format(row.suburban).replace(",", " ") }}
+                                </td>
+                                <td class="num long-distance">
+                                    {{ "{:,.0f}".format(row.long_distance).replace(",", " ") }}
+                                </td>
+                                <td class="num total">
+                                    {{ "{:,.0f}".format(row.total).replace(",", " ") }}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p class="empty-hint">
+                    Чтобы увидеть таблицу, выберите год и нажмите
+                    <strong>«Показать статистику»</strong>.
+                </p>
+            {% endif %}
+        </section>
+
+        <aside class="stats-side-card">
+            <div class="side-glow"></div>
+            <h2>Срез по году</h2>
+            <p class="side-desc">
+                Краткое резюме выбранного года с упором на периоды,
+                где инциденты могли повлиять на пассажиропоток.
+            </p>
+
+            <div class="side-metrics">
+                {% if rows %}
+                    {% set total_passengers = rows|sum(attribute='total') %}
+                    {% set months_with_incidents = rows|selectattr('has_incident')|list|length %}
+                    {% set avg_per_month = (total_passengers / 12) if rows else 0 %}
+                    <div class="side-metric">
+                        <span class="metric-label">Средний пассажиропоток в месяц</span>
+                        <span class="metric-value">
+                            {{ "{:,.0f}".format(avg_per_month).replace(",", " ") }}
+                        </span>
+                    </div>
+                {% else %}
+                    <div class="side-metric">
+                        <span class="metric-label">Совет</span>
+                        <span class="metric-value">
+                            Сначала выберите год, чтобы увидеть агрегированную статистику.
+                        </span>
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="side-footer">
+                <p class="side-footer-title">Режимы доступа</p>
+                <p class="side-footer-text">
+                    Обычные пользователи смотрят статистику и прогноз.
+                    Администраторы дополнительно управляют данными и инцидентами.
+                </p>
+            </div>
+        </aside>
+    </main>
+</div>
+</body>
+</html>

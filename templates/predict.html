@@ -2,59 +2,181 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
-  <title>Прогноз</title>
+  <title>Прогноз пассажиропотока</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/predict.css') }}">
   <script defer src="{{ url_for('static', filename='js/theme-toggle.js') }}"></script>
 </head>
 <body>
+  <!-- Переключатель темы -->
   <div class="theme-toggle">
     <button id="toggle-theme">🌙</button>
   </div>
 
-  <div class="predict-card">
-    <h1>📈 Прогноз пассажиропотока поездов</h1>
+  <div class="predict-page">
+    <div class="bg-orbit bg-orbit-1"></div>
+    <div class="bg-orbit bg-orbit-2"></div>
 
-    {% with messages = get_flashed_messages(with_categories=true, category_filter=['pred_success','pred_warning','pred_danger']) %}
-      {% if messages %}
-        <div class="messages">
-          {% for category, message in messages %}
-            <div class="alert {{ category }}">{{ message }}</div>
-          {% endfor %}
-        </div>
+    <header class="predict-topbar">
+      {% if is_admin %}
+        <a href="{{ url_for('dashboard') }}" class="top-back">← Личный кабинет</a>
+      {% else %}
+        <a href="{{ url_for('index') }}" class="top-back">← Главная страница</a>
       {% endif %}
-    {% endwith %}
 
-    <form method="POST" class="form-vertical" autocomplete="on">
-      <div class="field">
-        <label for="year">Год</label>
-        <input id="year" type="number" name="year" min="2016" max="2030" required
-               value="{{ request.form.get('year','') }}">
+      <div class="top-brand">
+        <div class="brand-mark">54</div>
+        <div class="brand-text">
+          <span class="brand-label">54TrafficInsight</span>
+          <span class="brand-sub">Прогноз пассажиропотока</span>
+        </div>
       </div>
+    </header>
 
-      <div class="field">
-        <label for="month">Месяц</label>
-        <input id="month" type="number" name="month" min="1" max="12" required
-               value="{{ request.form.get('month','') }}">
-      </div>
+    <main class="predict-layout">
+      <!-- Левая основная карточка -->
+      <section class="predict-main-card">
+        <div class="predict-header">
+          <div>
+            <p class="eyebrow">Прогноз • Сезонность • Инциденты</p>
+            <h1>📈 Прогноз пассажиропотока поездов</h1>
+            <p class="subtitle">
+              Укажите год и месяц (2016–2030), а система построит прогноз с учётом
+              сезонности и влияния инцидентов. Исторические данные доступны до {{ max_real_year }} года.
+            </p>
+          </div>
+        </div>
 
-      <button type="submit" class="primary">Построить прогноз</button>
-    </form>
+        {% with messages = get_flashed_messages(with_categories=true, category_filter=['pred_success','pred_warning','pred_danger','danger']) %}
+          {% if messages %}
+            <div class="flash-messages">
+              {% for category, message in messages %}
+                <div class="flash {{ category }}">{{ message }}</div>
+              {% endfor %}
+            </div>
+          {% endif %}
+        {% endwith %}
 
-    {% if prediction %}
-      <div class="result">
-        <h2>🔮 Прогноз на {{ request.form.get('year') }}-{{ "%02d"|format((request.form.get('month') or 1)|int) }}:
-          <strong>{{ prediction | round }} пассажиров поездов</strong>
-        </h2>
-      </div>
-    {% endif %}
+        <form method="POST" class="predict-form" autocomplete="on">
+          <div class="form-row">
+            <div class="field">
+              <label for="year">Год</label>
+              <input
+                id="year"
+                type="number"
+                name="year"
+                min="2016"
+                max="2030"
+                required
+                value="{{ request.form.get('year','') }}"
+              >
+            </div>
 
-    {% if plot_url %}
-      <div class="plot-card">
-        <img src="data:image/png;base64,{{ plot_url }}" alt="График прогноза">
-      </div>
-    {% endif %}
+            <div class="field">
+              <label for="month">Месяц</label>
+              <input
+                id="month"
+                type="number"
+                name="month"
+                min="1"
+                max="12"
+                required
+                value="{{ request.form.get('month','') }}"
+              >
+            </div>
 
-    <a class="back-link" href="{{ url_for('dashboard') }}">← Назад в кабинет</a>
+            <button type="submit" class="btn-primary">
+              Построить прогноз
+            </button>
+          </div>
+
+          <p class="form-hint">
+            Наиболее надёжный прогноз получается при выборе периодов
+            до {{ max_real_year }} года включительно.
+          </p>
+        </form>
+
+        {% if prediction %}
+          {% set year_val = request.form.get('year') %}
+          {% set month_val = (request.form.get('month') or 1)|int %}
+          <div class="prediction-highlight">
+            <div class="prediction-main">
+              <p class="prediction-label">Прогноз на {{ year_val }}-{{ "%02d"|format(month_val) }}</p>
+              <p class="prediction-value">
+                {{ prediction | round }} <span>пассажиров</span>
+              </p>
+            </div>
+            <p class="prediction-note">
+              Значение получено на основе линейной регрессии с учётом сезонности и
+              коэффициентов влияния зарегистрированных инцидентов.
+            </p>
+          </div>
+        {% endif %}
+
+        {% if plot_url %}
+          <div class="plot-wrapper">
+            <div class="plot-header">
+              <span class="plot-title">Динамика пассажиропотока с прогнозом</span>
+              <span class="plot-legend">
+                <span class="dot dot-fact"></span> факт
+                <span class="dot dot-forecast"></span> прогноз
+              </span>
+            </div>
+            <div class="plot-card">
+              <img src="data:image/png;base64,{{ plot_url }}" alt="График прогноза">
+            </div>
+          </div>
+        {% endif %}
+      </section>
+
+      <!-- Правая карточка с подсказками / резюме -->
+      <aside class="predict-side-card">
+        <div class="side-glow"></div>
+        <h2>Как читается прогноз</h2>
+        <p class="side-desc">
+          Модель строит зависимость пассажиропотока от года, месяца и сезонных факторов,
+          а затем корректирует результат с учётом инцидентов.
+        </p>
+
+        <div class="side-metrics">
+          {% if prediction %}
+            <div class="side-metric">
+              <span class="metric-label">Период прогноза</span>
+              <span class="metric-value">
+                {{ year_val }}-{{ "%02d"|format(month_val) }}
+              </span>
+            </div>
+            <div class="side-metric">
+              <span class="metric-label">Оценка потока</span>
+              <span class="metric-value">
+                {{ prediction | round }} пассажиров
+              </span>
+            </div>
+          {% else %}
+            <div class="side-metric">
+              <span class="metric-label">Шаг 1</span>
+              <span class="metric-value">
+                Выберите год и месяц, на который хотите построить прогноз.
+              </span>
+            </div>
+            <div class="side-metric">
+              <span class="metric-label">Шаг 2</span>
+              <span class="metric-value">
+                Нажмите «Построить прогноз» и оцените динамику на графике.
+              </span>
+            </div>
+          {% endif %}
+        </div>
+
+        <div class="side-footer">
+          <p class="side-footer-title">С чем помогает прогноз</p>
+          <p class="side-footer-text">
+            • Планирование нагрузки на пригородные и дальние рейсы.<br>
+            • Анализ влияния инцидентов на пассажиропоток.<br>
+            • Подготовка отчётов по устойчивости перевозок и ИБ.
+          </p>
+        </div>
+      </aside>
+    </main>
   </div>
 </body>
 </html>
