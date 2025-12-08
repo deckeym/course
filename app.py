@@ -247,9 +247,39 @@ def predict():
             year = int(request.form['year'])
             month = int(request.form['month'])
 
-            if not (2016 <= year <= 2030) or not (1 <= month <= 12):
-                flash("Введите корректный год и месяц.", "danger")
+            # --- ВАЛИДАЦИЯ ДАТЫ ПРОГНОЗА ---
+
+            # 1. Месяц 1–12
+            if not (1 <= month <= 12):
+                flash("Месяц должен быть от 1 до 12.", "danger")
                 return redirect(url_for("predict"))
+
+            # 2. Верхняя граница — не позже декабря 2030 года
+            if year > 2030 or (year == 2030 and month > 12):
+                flash("Прогноз можно строить не позже декабря 2030 года.", "danger")
+                return redirect(url_for("predict"))
+
+            # 3. Минимум — следующий месяц относительно текущей даты
+            today = datetime.now()
+            cur_year = today.year
+            cur_month = today.month
+
+            next_year = cur_year
+            next_month = cur_month + 1
+            if next_month > 12:
+                next_month = 1
+                next_year += 1
+
+            # если запрошенный период раньше первого допустимого — запрещаем
+            if year < next_year or (year == next_year and month < next_month):
+                flash(
+                    f"Прогноз можно строить только для будущих периодов, "
+                    f"начиная с {next_month:02d}.{next_year}.",
+                    "danger",
+                )
+                return redirect(url_for("predict"))
+
+            # --- /ВАЛИДАЦИЯ ДАТЫ ПРОГНОЗА ---
 
             # Берём только фактические данные до MAX_REAL_YEAR
             data = (
@@ -302,8 +332,8 @@ def predict():
             missing = df_full['passengers'].isna()
             if missing.any():
                 X_missing = df_full.loc[missing, ['year', 'sin_month', 'cos_month']]
-                predicted = model.predict(X_missing)
-                df_full.loc[missing, 'passengers'] = predicted
+                predicted_missing = model.predict(X_missing)
+                df_full.loc[missing, 'passengers'] = predicted_missing
 
             df_full['adjusted'] = df_full['passengers']
 
